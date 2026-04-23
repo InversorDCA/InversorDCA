@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA Planner — Planificador de inversión a largo plazo</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="description" content="DCA Planner: herramienta gratuita para planificar inversiones periódicas, calcular interés compuesto, analizar carteras y estimar dividendos a largo plazo.">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:#f5f4f0; --surface:#ffffff; --surface2:#f0efe9;
+  --border:#e2dfd6; --border2:#c8c4b8;
+  --text:#17160f; --text2:#5c5a52; --text3:#9c9a90;
+  --accent:#1b5e38; --accent-light:#22784a; --accent-bg:#eaf3ed;
+  --accent2:#1a4480;
+  --gold:#8a5c0a; --gold-bg:#fdf2df; --gold-border:#dfc278;
+  --red:#aa1c1c; --red-bg:#fce8e8;
+  --purple:#5b21b6; --purple-bg:#f0ecff;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.04);
+  --shadow-md:0 2px 8px rgba(0,0,0,.06),0 10px 28px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.08),0 24px 64px rgba(0,0,0,.08);
+  --r:12px; --rsm:8px; --nav-w:240px;
+  --font-sans:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-serif:'Fraunces',Georgia,serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+
+html { font-size:15px; }
+body { background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:.9rem; line-height:1.6; min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+/* LAYOUT */
+.layout { display:flex; min-height:100vh; }
+
+/* SIDEBAR */
+.sidebar { width:var(--nav-w); flex-shrink:0; background:var(--surface); border-right:1px solid var(--border); position:fixed; top:0; left:0; height:100vh; display:flex; flex-direction:column; z-index:50; overflow-y:auto; transition:transform .28s cubic-bezier(.4,0,.2,1); }
+.sidebar-logo { padding:26px 22px 18px; border-bottom:1px solid var(--border); }
+.logo-mark { font-family:var(--font-serif); font-size:21px; font-weight:400; letter-spacing:-0.03em; line-height:1; color:var(--text); }
+.logo-mark span { color:var(--accent); font-style:italic; }
+.logo-sub { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--text3); margin-top:5px; }
+.nav { padding:10px 0 16px; flex:1; }
+.nav-section { padding:16px 22px 5px; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); }
+.nav-item { display:flex; align-items:center; gap:10px; padding:8px 22px; cursor:pointer; font-size:13px; font-weight:400; color:var(--text2); border-left:2px solid transparent; text-decoration:none; transition:all .15s; }
+.nav-item:hover { background:var(--bg); color:var(--text); }
+.nav-item.active { color:var(--accent); background:var(--accent-bg); border-left-color:var(--accent); font-weight:600; }
+.nav-item .nav-icon { font-size:14px; width:20px; text-align:center; flex-shrink:0; }
+.sidebar-footer { padding:14px 22px; border-top:1px solid var(--border); font-size:10.5px; color:var(--text3); line-height:1.7; }
+
+/* TOPBAR */
+.main { margin-left:var(--nav-w); flex:1; min-width:0; }
+.topbar { position:sticky; top:0; z-index:40; background:rgba(245,244,240,.95); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); padding:0 36px; height:52px; display:flex; justify-content:space-between; align-items:center; }
+.topbar-left { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:500; color:var(--text2); }
+.topbar-left strong { color:var(--text); font-weight:700; }
+.topbar-actions { display:flex; gap:8px; align-items:center; }
+
+/* SECTIONS */
+.section { display:none; padding:44px 40px 80px; max-width:920px; }
+.section.active { display:block; animation:fadeIn .3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* Section header — the key structural element */
+.section-header { margin-bottom:40px; padding-bottom:32px; border-bottom:2px solid var(--border); }
+.section-eyebrow { display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:var(--accent); background:var(--accent-bg); border:1px solid #b8ddc8; border-radius:20px; padding:3px 11px; margin-bottom:14px; }
+.section-title { font-family:var(--font-serif); font-size:clamp(28px,4vw,40px); font-weight:300; letter-spacing:-0.04em; line-height:1.1; color:var(--text); margin-bottom:14px; }
+.section-title em, .section-title i { font-style:italic; color:var(--accent); }
+.section-desc { font-size:14.5px; font-weight:400; color:var(--text2); line-height:1.85; max-width:580px; }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; gap:6px; font-family:var(--font-sans); font-size:12.5px; font-weight:600; padding:8px 16px; border-radius:var(--rsm); cursor:pointer; border:1px solid var(--border2); background:var(--surface); color:var(--text2); transition:all .15s; white-space:nowrap; }
+.btn:hover { background:var(--surface2); color:var(--text); }
+.btn-primary { background:var(--text); color:#fff; border-color:var(--text); }
+.btn-primary:hover { background:#2a2920; }
+.btn-accent { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-accent:hover { background:var(--accent-light); }
+
+/* CARDS */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; box-shadow:var(--shadow); }
+.card-header { padding:15px 22px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); }
+.card-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text2); }
+.card-badge { font-size:11px; font-weight:500; background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:3px 10px; color:var(--text3); }
+.card-action { font-size:11.5px; font-weight:600; color:var(--accent); cursor:pointer; background:var(--accent-bg); border:1px solid #b8ddc8; border-radius:6px; padding:4px 12px; transition:all .15s; }
+.card-action:hover { background:#d4ebdc; }
+
+/* GRIDS */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.mb-4{margin-bottom:4px} .mb-8{margin-bottom:8px} .mb-14{margin-bottom:14px} .mb-20{margin-bottom:20px} .mb-28{margin-bottom:28px}
+
+/* STAT CARDS */
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:18px 20px; box-shadow:var(--shadow); }
+.stat-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--text3); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.stat-val { font-family:var(--font-serif); font-size:28px; font-weight:300; letter-spacing:-0.04em; line-height:1; }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:5px; }
+.stat-green{color:var(--accent)} .stat-gold{color:var(--gold)} .stat-blue{color:var(--accent2)} .stat-purple{color:var(--purple)}
+
+/* SLIDERS */
+.slider-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:18px 22px; box-shadow:var(--shadow); }
+.slider-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); margin-bottom:14px; }
+.slider-row { display:flex; align-items:center; gap:14px; }
+input[type=range] { flex:1; -webkit-appearance:none; height:3px; border-radius:2px; background:var(--border); outline:none; cursor:pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); border:2.5px solid white; box-shadow:0 1px 5px rgba(0,0,0,.15); cursor:pointer; transition:transform .15s; }
+input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); }
+.slider-val { font-family:var(--font-serif); font-size:22px; font-weight:300; color:var(--accent); min-width:58px; text-align:right; letter-spacing:-0.02em; }
+
+/* ALLOCATION */
+.alloc-bar-full { height:6px; display:flex; border-radius:4px; overflow:hidden; gap:2px; }
+.alloc-seg { height:100%; border-radius:3px; transition:width .4s; min-width:2px; }
+.asset-row { display:flex; align-items:center; gap:12px; padding:13px 22px; border-bottom:1px solid var(--bg); transition:background .12s; }
+.asset-row:last-child { border-bottom:none; }
+.asset-row:hover { background:var(--surface2); }
+.asset-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.asset-info { flex:1; min-width:0; }
+.asset-name { font-size:13px; font-weight:600; color:var(--text); }
+.asset-sub { font-size:11px; color:var(--text3); margin-top:1px; }
+.asset-tag { font-size:10px; font-weight:600; padding:2px 8px; border-radius:4px; letter-spacing:.02em; flex-shrink:0; }
+.tag-core { background:var(--accent-bg); color:var(--accent); }
+.tag-sat  { background:var(--gold-bg);   color:var(--gold);   }
+.asset-right { text-align:right; flex-shrink:0; }
+.asset-eur { font-family:var(--font-serif); font-size:17px; font-weight:300; letter-spacing:-0.02em; }
+.asset-pct { font-size:10px; font-weight:600; color:var(--text3); display:block; }
+.sat-sep { padding:8px 22px 5px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); background:var(--surface2); border-top:1px solid var(--border); }
+
+/* PIE */
+.pie-wrap { padding:20px 22px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+.pie-legend { display:flex; flex-direction:column; gap:8px; width:100%; }
+.pie-legend-row { display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text2); }
+.pie-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* CHART */
+.chart-tabs { display:flex; padding:0 22px; border-bottom:1px solid var(--border); gap:2px; }
+.chart-tab { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--text3); padding:12px 14px 10px; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; transition:all .15s; font-family:var(--font-sans); }
+.chart-tab:hover { color:var(--text2); }
+.chart-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.chart-area { padding:22px 22px 10px; }
+.chart-legend { display:flex; gap:18px; padding:4px 22px 16px; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--text3); }
+.legend-dot { width:10px; height:3px; border-radius:2px; }
+
+/* MILESTONES */
+.milestone { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:20px; box-shadow:var(--shadow); transition:box-shadow .2s,transform .2s; }
+.milestone:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.ms-years { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); margin-bottom:10px; }
+.ms-total { font-family:var(--font-serif); font-size:28px; font-weight:300; color:var(--accent); letter-spacing:-0.04em; }
+.ms-gain { font-size:11px; font-weight:600; color:var(--accent); margin-top:4px; }
+.ms-invested { font-size:11px; color:var(--text3); margin-top:2px; }
+.ms-mult { font-size:12px; font-weight:700; color:var(--accent2); margin-top:8px; }
+
+/* DIVIDENDO */
+.div-big { font-family:var(--font-serif); font-size:40px; font-weight:300; color:var(--gold); letter-spacing:-0.04em; line-height:1; }
+.div-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--text3); margin-bottom:8px; }
+.yield-pill { background:var(--gold-bg); border:1px solid var(--gold-border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:700; color:var(--gold); }
+.div-grid { display:grid; grid-template-columns:1fr 1fr; }
+.div-cell { padding:14px 22px; border-bottom:1px solid var(--surface2); }
+.div-cell:nth-child(odd) { border-right:1px solid var(--surface2); }
+.div-cell:nth-child(3),.div-cell:nth-child(4) { border-bottom:none; }
+.div-cell-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); margin-bottom:5px; }
+.div-cell-val { font-family:var(--font-serif); font-size:20px; font-weight:300; letter-spacing:-0.03em; }
+.note-strip { padding:13px 22px; font-size:12.5px; line-height:1.7; border-top:1px solid var(--border); }
+.note-green { background:var(--accent-bg); color:var(--accent); }
+.note-gold  { background:var(--gold-bg); color:var(--gold); border-top-color:var(--gold-border); }
+.note-purple{ background:var(--purple-bg); color:var(--purple); }
+
+/* INFO BOX */
+.info-box { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:var(--rsm); padding:14px 18px; font-size:13px; color:var(--text2); line-height:1.75; margin-bottom:16px; }
+.info-box strong { color:var(--text); font-weight:700; }
+
+/* TOOLTIP */
+.tooltip-wrap { position:relative; display:inline-flex; align-items:center; }
+.tooltip-icon { width:15px; height:15px; border-radius:50%; background:var(--border); color:var(--text3); font-size:9px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; cursor:help; }
+.tooltip-box { position:absolute; left:22px; top:-4px; background:var(--text); color:white; font-size:11px; padding:9px 13px; border-radius:8px; width:210px; line-height:1.65; z-index:99; pointer-events:none; opacity:0; transition:opacity .15s; white-space:normal; }
+.tooltip-wrap:hover .tooltip-box { opacity:1; }
+
+/* SCENARIOS */
+.scenario-card { border-radius:var(--r); padding:20px; border:1px solid; }
+.scenario-bear { background:#fdf2f2; border-color:#f9a8a8; }
+.scenario-base { background:var(--accent-bg); border-color:#9ad1b4; }
+.scenario-bull { background:#eff6ff; border-color:#93c5fd; }
+.scenario-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px; }
+.scenario-val   { font-family:var(--font-serif); font-size:28px; font-weight:300; letter-spacing:-0.04em; line-height:1; }
+.scenario-sub   { font-size:11px; color:var(--text3); margin-top:5px; }
+
+/* INPUTS */
+.inv-input { font-family:var(--font-sans); font-size:15px; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--rsm); padding:10px 14px; color:var(--text); outline:none; width:100%; transition:border-color .15s,box-shadow .15s; }
+.inv-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(27,94,56,.08); }
+.inv-result { font-family:var(--font-serif); font-size:40px; font-weight:300; color:var(--accent); letter-spacing:-0.04em; line-height:1; }
+.inv-result-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); margin-bottom:8px; }
+
+/* REBALANCEO */
+.rebal-row { display:flex; align-items:center; gap:12px; padding:12px 22px; border-bottom:1px solid var(--surface2); }
+.rebal-row:last-child { border-bottom:none; }
+.rebal-name { flex:1; font-size:13px; font-weight:600; }
+.rebal-pill { font-size:11px; font-weight:700; padding:3px 11px; border-radius:20px; }
+.rebal-buy  { background:var(--accent-bg); color:var(--accent); }
+.rebal-sell { background:var(--red-bg); color:var(--red); }
+.rebal-ok   { background:var(--surface2); color:var(--text3); }
+.rebal-val  { font-family:var(--font-serif); font-size:16px; font-weight:300; min-width:72px; text-align:right; }
+
+/* REGLA 20% */
+.budget-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.budget-label { font-size:12.5px; font-weight:600; color:var(--text2); width:140px; flex-shrink:0; }
+.budget-bar-bg { flex:1; height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; border:1px solid var(--border); }
+.budget-bar-fill { height:100%; border-radius:3px; transition:width .5s; }
+.budget-val { font-family:var(--font-serif); font-size:15px; font-weight:300; min-width:64px; text-align:right; }
+.salary-input-big { font-family:var(--font-sans); font-size:18px; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--rsm); padding:10px 14px; color:var(--text); outline:none; transition:border-color .15s; width:100%; max-width:200px; }
+.salary-input-big:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(27,94,56,.08); }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(23,22,15,.4); display:none; align-items:center; justify-content:center; z-index:200; backdrop-filter:blur(4px); }
+.modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-lg); width:100%; max-width:560px; max-height:92vh; overflow-y:auto; padding:30px; }
+.modal h2 { font-family:var(--font-serif); font-size:26px; font-weight:300; letter-spacing:-0.04em; margin-bottom:4px; }
+.modal-sub { font-size:13px; color:var(--text2); margin-bottom:24px; line-height:1.7; }
+.modal-section-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); margin:22px 0 10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+.edit-col-heads { display:grid; grid-template-columns:36px 1fr 72px 64px 30px; gap:7px; padding:0 10px 8px; }
+.edit-col-head  { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); }
+.edit-row { display:grid; grid-template-columns:36px 1fr 72px 64px 30px; gap:7px; align-items:center; padding:8px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--rsm); margin-bottom:6px; }
+.ei { font-family:var(--font-sans); font-size:12.5px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 9px; color:var(--text); outline:none; width:100%; transition:border-color .15s; }
+.ei:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(27,94,56,.08); }
+.ei-emoji { text-align:center; font-size:16px; padding:4px 2px; }
+.ei-num   { text-align:right; font-family:var(--font-mono); font-size:12px; }
+.del-btn  { background:none; border:none; cursor:pointer; color:var(--text3); font-size:13px; padding:4px; border-radius:5px; transition:color .15s,background .15s; display:flex; align-items:center; justify-content:center; }
+.del-btn:hover { color:var(--red); background:var(--red-bg); }
+.add-asset-btn { width:100%; padding:10px; border:1px dashed var(--border2); border-radius:var(--rsm); background:none; cursor:pointer; font-family:var(--font-sans); font-size:12.5px; font-weight:600; color:var(--text3); transition:all .15s; margin-top:4px; }
+.add-asset-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+.pct-status { font-size:12px; font-weight:600; padding:9px 14px; border-radius:8px; margin-top:12px; }
+.pct-ok   { background:var(--accent-bg); color:var(--accent); }
+.pct-warn { background:#fffbeb; color:#78450a; }
+.pct-err  { background:var(--red-bg); color:var(--red); }
+.modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:22px; padding-top:18px; border-top:1px solid var(--border); }
+
+/* THEME */
+.theme-toggle { background:none; border:1px solid var(--border); border-radius:var(--rsm); padding:7px 10px; cursor:pointer; font-size:14px; transition:all .15s; }
+.theme-toggle:hover { background:var(--surface2); }
+
+/* DARK MODE */
+body.dark {
+  --bg:#0e0e0c; --surface:#151512; --surface2:#1c1c18;
+  --border:#252520; --border2:#333328;
+  --text:#eeeade; --text2:#888070; --text3:#4a4840;
+  --accent:#28a862; --accent-light:#34c070; --accent-bg:#0c1f13;
+  --accent2:#5da3ff; --gold:#d4a820; --gold-bg:#1a1506; --gold-border:#3e3010;
+  --red:#f87070; --red-bg:#1f0c0c; --purple:#b89bfc; --purple-bg:#160f2a;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.3);
+  --shadow-md:0 2px 8px rgba(0,0,0,.5),0 12px 32px rgba(0,0,0,.4);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.6),0 24px 64px rgba(0,0,0,.5);
+}
+body.dark .scenario-bear { background:#1a0808; border-color:#5c1c1c; }
+body.dark .scenario-bull { background:#060f20; border-color:#1a3a5f; }
+
+/* MOBILE */
+.mobile-nav-btn { display:none; background:none; border:none; cursor:pointer; font-size:20px; padding:4px; }
+.mobile-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:45; }
+.mobile-overlay.open { display:block; }
+@media(max-width:768px) {
+  .sidebar { transform:translateX(-100%); }
+  .sidebar.open { transform:translateX(0); }
+  .main { margin-left:0; }
+  .mobile-nav-btn { display:block; }
+  .section { padding:28px 18px 56px; }
+  .topbar { padding:0 18px; }
+  .grid-2,.grid-3,.grid-4 { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:480px) { .grid-2,.grid-3,.grid-4 { grid-template-columns:1fr; } }
+
+/* MISC */
+.divider { border:none; border-top:1px solid var(--border); margin:22px 0; }
+input[type=number]::-webkit-inner-spin-button { opacity:.5; }
+
+</style>
+</head>
+<body>
+
+<div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+
+<!-- ══════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">DCA<span>Planner</span></div>
+    <div class="logo-sub">Planificador de inversión</div>
+  </div>
+
+  <div class="nav">
+    <div class="nav-section">Principal</div>
+    <a class="nav-item active" onclick="showSection('inicio')">
+      <span class="nav-icon">🏠</span> Inicio
+    </a>
+    <a class="nav-item" onclick="showSection('cartera')">
+      <span class="nav-icon">📊</span> Mi cartera
+    </a>
+    <a class="nav-item" onclick="showSection('interes')">
+      <span class="nav-icon">📈</span> Interés compuesto
+    </a>
+
+    <div class="nav-section" style="margin-top:8px">Análisis</div>
+    <a class="nav-item" onclick="showSection('escenarios')">
+      <span class="nav-icon">🔭</span> Escenarios
+    </a>
+    <a class="nav-item" onclick="showSection('inflacion')">
+      <span class="nav-icon">🌡️</span> Inflación real
+    </a>
+    <a class="nav-item" onclick="showSection('creciente')">
+      <span class="nav-icon">🚀</span> Aportación creciente
+    </a>
+    <a class="nav-item" onclick="showSection('inversa')">
+      <span class="nav-icon">🎯</span> Calculadora inversa
+    </a>
+
+    <div class="nav-section" style="margin-top:8px">Herramientas</div>
+    <a class="nav-item" onclick="showSection('dividendos')">
+      <span class="nav-icon">💰</span> Dividendos
+    </a>
+    <a class="nav-item" onclick="showSection('rebalanceo')">
+      <span class="nav-icon">⚖️</span> Rebalanceo
+    </a>
+    <a class="nav-item" onclick="showSection('ahorro')">
+      <span class="nav-icon">💼</span> Regla del 20%
+    </a>
+    <a class="nav-item" onclick="showSection('rentabilidad')">
+      <span class="nav-icon">📐</span> Rentabilidad
+    </a>
+    <a class="nav-item" onclick="showSection('calcrental')">
+      <span class="nav-icon">🧮</span> Calc. rentabilidad
+    </a>
+    <a class="nav-item" onclick="showSection('glosario')">
+      <span class="nav-icon">📖</span> Glosario
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    Herramienta educativa gratuita.<br>
+    Ningún dato se almacena ni se envía.<br>
+    No constituye asesoramiento financiero.
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     MAIN
+══════════════════════════════════════ -->
+<div class="main">
+
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="mobile-nav-btn" onclick="toggleSidebar()">☰</button>
+      <span class="topbar-left"><strong id="topbarSection">Inicio</strong></span>
+    </div>
+    <div class="topbar-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+      <button class="btn" onclick="openModal()">✏️ Editar cartera</button>
+      <button class="btn btn-primary" onclick="window.print()">↓ Exportar</button>
+    </div>
+  </div>
+
+  <!-- ══ INICIO ══ -->
+  <section class="section active" id="sec-inicio">
+    <div class="section-header">
+      <div class="section-eyebrow">Herramienta gratuita · Educativa · Sin registro</div>
+      <div class="section-title">Planifica tu inversión<br><i>DCA</i> a largo plazo</div>
+      <div class="section-desc">DCA Planner es una herramienta interactiva y gratuita que permite a cualquier inversor visualizar el poder del interés compuesto, construir y personalizar una cartera de activos, estimar dividendos, analizar escenarios y planificar aportaciones periódicas con rigor y claridad.</div>
+    </div>
+
+    <div class="grid-4 mb-20">
+      <div class="stat-card"><div class="stat-lbl">Aportación mensual <span class="tooltip-wrap"><i class="tooltip-icon">?</i><span class="tooltip-box">Cantidad que se aporta cada mes a la cartera de inversión de forma periódica y automática.</span></span></div><div class="stat-val stat-green" id="stat-amount">200€</div><div class="stat-sub">Configurable</div></div>
+      <div class="stat-card"><div class="stat-lbl">Rentabilidad ponderada</div><div class="stat-val stat-green" id="stat-rent">—</div><div class="stat-sub">Estimada por activo</div></div>
+      <div class="stat-card"><div class="stat-lbl">Activos en cartera</div><div class="stat-val stat-blue" id="stat-activos">4</div><div class="stat-sub">Core + satélite</div></div>
+      <div class="stat-card"><div class="stat-lbl">Aportación anual</div><div class="stat-val stat-gold" id="stat-anual">2.400€</div><div class="stat-sub">Sin reinversión</div></div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="slider-card">
+        <label class="slider-label">Aportación mensual</label>
+        <div class="slider-row">
+          <input type="range" id="sliderAmount" min="50" max="2000" step="10" value="200">
+          <span class="slider-val" id="valAmount">200€</span>
+        </div>
+      </div>
+      <div class="slider-card">
+        <label class="slider-label">Años de horizonte temporal</label>
+        <div class="slider-row">
+          <input type="range" id="sliderYears" min="5" max="50" step="1" value="20">
+          <span class="slider-val" id="valYears">20</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>¿Cómo funciona esta herramienta?</strong><br>
+      Configura la aportación mensual y el horizonte temporal en los controles de arriba. Luego navega por las secciones del menú lateral para explorar la cartera, proyecciones, escenarios, dividendos y más. Todos los cálculos se actualizan en tiempo real en el navegador.
+    </div>
+
+    <div class="grid-3">
+      <div class="milestone" onclick="showSection('interes')" style="cursor:pointer">
+        <div class="ms-years">En 20 años</div>
+        <div class="ms-total" id="home-m20">—</div>
+        <div class="ms-gain" id="home-m20g">—</div>
+        <div class="ms-invested" id="home-m20i">—</div>
+        <div class="ms-mult" id="home-m20x">—</div>
+      </div>
+      <div class="milestone" onclick="showSection('interes')" style="cursor:pointer">
+        <div class="ms-years">En 30 años</div>
+        <div class="ms-total" id="home-m30">—</div>
+        <div class="ms-gain" id="home-m30g">—</div>
+        <div class="ms-invested" id="home-m30i">—</div>
+        <div class="ms-mult" id="home-m30x">—</div>
+      </div>
+      <div class="milestone" onclick="showSection('interes')" style="cursor:pointer">
+        <div class="ms-years">En 40 años</div>
+        <div class="ms-total" id="home-m40">—</div>
+        <div class="ms-gain" id="home-m40g">—</div>
+        <div class="ms-invested" id="home-m40i">—</div>
+        <div class="ms-mult" id="home-m40x">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CARTERA ══ -->
+  <section class="section" id="sec-cartera">
+    <div class="section-header">
+      <div class="section-eyebrow">Distribución de activos</div>
+      <div class="section-title">Mi cartera <i>personalizada</i></div>
+      <div class="section-desc">Distribución de los activos de la cartera. Cada activo puede configurarse con su porcentaje, rentabilidad histórica de referencia y yield de dividendo. Los porcentajes siempre deben sumar 100%.</div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Activos y pesos</span>
+          <span class="card-action" onclick="openModal()">Editar cartera</span>
+        </div>
+        <div style="padding:12px 20px 4px"><div class="alloc-bar-full" id="allocBar"></div></div>
+        <div id="allocCore"></div>
+        <div id="satSep" class="sat-sep" style="display:none">🛰 Satélite</div>
+        <div id="allocSat"></div>
+      </div>
+
+      <!-- Pie chart -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Distribución visual</span></div>
+        <div class="pie-wrap">
+          <svg id="pieChart" viewBox="-1 -1 2 2" style="width:160px;height:160px;transform:rotate(-90deg)"></svg>
+          <div class="pie-legend" id="pieLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>Activos core vs satélite:</strong> Los activos <em>core</em> forman el núcleo de la cartera (ETFs de índices amplios, alta diversificación). Los activos <em>satélite</em> son posiciones complementarias con un objetivo concreto como dividendos, exposición temática o mayor potencial de crecimiento.
+    </div>
+  </section>
+
+  <!-- ══ INTERÉS COMPUESTO ══ -->
+  <section class="section" id="sec-interes">
+    <div class="section-header">
+      <div class="section-eyebrow">Proyección a largo plazo</div>
+      <div class="section-title">El poder del <i>interés compuesto</i></div>
+      <div class="section-desc">El interés compuesto es el principio por el cual los rendimientos generados se reinvierten y generan a su vez nuevos rendimientos. A mayor horizonte temporal, mayor es el efecto multiplicador sobre el capital invertido.</div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header">
+        <span class="card-title">Evolución del capital</span>
+        <span class="card-badge" id="chartFinalVal">—</span>
+      </div>
+      <div class="chart-tabs">
+        <button class="chart-tab" onclick="setH(10,this)">10 años</button>
+        <button class="chart-tab active" onclick="setH(20,this)">20 años</button>
+        <button class="chart-tab" onclick="setH(30,this)">30 años</button>
+        <button class="chart-tab" onclick="setH(40,this)">40 años</button>
+        <button class="chart-tab" onclick="setHSlider()">Personalizado</button>
+      </div>
+      <div class="chart-area"><canvas id="mainChart" height="180"></canvas></div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1a6b46"></div>Capital total acumulado</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ccc"></div>Capital aportado</div>
+        <div class="legend-item" id="legendDiv" style="display:none"><div class="legend-dot" style="background:#92620e"></div>Dividendos acumulados</div>
+      </div>
+    </div>
+
+    <div class="grid-3 mb-14" id="milestones"></div>
+
+    <div class="info-box">
+      <strong>¿Por qué el interés compuesto es tan poderoso?</strong><br>
+      Con una aportación mensual constante y una rentabilidad media del 8% anual, el dinero se duplica aproximadamente cada 9 años. A 40 años de horizonte, los rendimientos generados superan con creces el capital aportado, convirtiendo la constancia en el activo más valioso del inversor.
+    </div>
+  </section>
+
+  <!-- ══ ESCENARIOS ══ -->
+  <section class="section" id="sec-escenarios">
+    <div class="section-header">
+      <div class="section-eyebrow">Análisis de sensibilidad</div>
+      <div class="section-title">Comparador de <i>escenarios</i></div>
+      <div class="section-desc">Ninguna proyección financiera es certera. Este comparador muestra tres escenarios posibles — pesimista, base y optimista — para que el inversor comprenda el rango de resultados realistas según distintas hipótesis de rentabilidad.</div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header"><span class="card-title">Rentabilidades por escenario</span></div>
+      <div style="padding:16px 20px">
+        <div class="grid-3 mb-14">
+          <div><label class="slider-label">🐻 Pesimista</label><div class="slider-row"><input type="range" id="sBear" min="1" max="8" step=".5" value="4"><span class="slider-val" id="vBear" style="color:var(--red)">4%</span></div></div>
+          <div><label class="slider-label">📊 Base</label><div class="slider-row"><input type="range" id="sBase" min="4" max="12" step=".5" value="7"><span class="slider-val" id="vBase" style="color:var(--accent)">7%</span></div></div>
+          <div><label class="slider-label">🐂 Optimista</label><div class="slider-row"><input type="range" id="sBull" min="8" max="20" step=".5" value="11"><span class="slider-val" id="vBull" style="color:var(--accent2)">11%</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header"><span class="card-title">Proyección de escenarios</span><span class="card-badge" id="scYears">20 años</span></div>
+      <div class="chart-area"><canvas id="scChart" height="180"></canvas></div>
+    </div>
+
+    <div class="grid-3 mb-14">
+      <div class="scenario-card scenario-bear">
+        <div class="scenario-label" style="color:var(--red)">🐻 Pesimista</div>
+        <div class="scenario-val" style="color:var(--red)" id="scBearVal">—</div>
+        <div class="scenario-sub" id="scBearSub">—</div>
+      </div>
+      <div class="scenario-card scenario-base">
+        <div class="scenario-label" style="color:var(--accent)">📊 Base</div>
+        <div class="scenario-val" style="color:var(--accent)" id="scBaseVal">—</div>
+        <div class="scenario-sub" id="scBaseSub">—</div>
+      </div>
+      <div class="scenario-card scenario-bull">
+        <div class="scenario-label" style="color:var(--accent2)">🐂 Optimista</div>
+        <div class="scenario-val" style="color:var(--accent2)" id="scBullVal">—</div>
+        <div class="scenario-sub" id="scBullSub">—</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>Cómo interpretar los escenarios:</strong> El escenario base utiliza la rentabilidad histórica media ponderada de la cartera configurada. El pesimista simula un entorno de bajos rendimientos sostenidos. El optimista refleja décadas excepcionalmente favorables. La realidad, históricamente, suele situarse entre el escenario base y el optimista para carteras diversificadas globalmente a largo plazo.
+    </div>
+  </section>
+
+  <!-- ══ INFLACIÓN ══ -->
+  <section class="section" id="sec-inflacion">
+    <div class="section-header">
+      <div class="section-eyebrow">Valor real del dinero</div>
+      <div class="section-title">Impacto de la <i>inflación</i></div>
+      <div class="section-desc">La inflación erosiona el poder adquisitivo del dinero a lo largo del tiempo. Esta sección muestra la diferencia entre el capital nominal acumulado (lo que marca la cifra) y el capital real (lo que ese dinero podrá comprar en el futuro).</div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header"><span class="card-title">Tasa de inflación anual estimada</span></div>
+      <div style="padding:16px 20px">
+        <div class="slider-row">
+          <input type="range" id="sInflation" min="1" max="8" step=".5" value="2.5">
+          <span class="slider-val" id="vInflation" style="color:var(--red)">2.5%</span>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:10px">La media histórica de la eurozona se sitúa en torno al 2–3% anual. Valores superiores al 4% corresponden a períodos de alta inflación excepcional.</div>
+      </div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header">
+        <span class="card-title">Capital nominal vs capital real</span>
+        <span class="card-badge" id="inflBadge">—</span>
+      </div>
+      <div class="chart-area"><canvas id="inflChart" height="180"></canvas></div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1a6b46"></div>Capital nominal</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#b91c1c"></div>Capital real (ajustado a inflación)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ccc"></div>Capital aportado</div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="stat-card"><div class="stat-lbl">Capital nominal (en <span id="inflYears">20</span> años)</div><div class="stat-val stat-green" id="inflNom">—</div><div class="stat-sub">Sin ajuste de inflación</div></div>
+      <div class="stat-card"><div class="stat-lbl">Capital real (poder adquisitivo)</div><div class="stat-val stat-gold" id="inflReal">—</div><div class="stat-sub">Valor equivalente hoy</div></div>
+    </div>
+
+    <div class="info-box">
+      <strong>¿Por qué importa la inflación?</strong><br>
+      Con una inflación del 2,5% anual sostenida durante 30 años, 100.000€ nominales tendrán el poder adquisitivo equivalente a unos 47.000€ de hoy. Invertir en renta variable con rentabilidades históricas superiores a la inflación es la estrategia más contrastada para preservar y hacer crecer el patrimonio en términos reales.
+    </div>
+  </section>
+
+  <!-- ══ CRECIENTE ══ -->
+  <section class="section" id="sec-creciente">
+    <div class="section-header">
+      <div class="section-eyebrow">Efecto de incrementar la aportación</div>
+      <div class="section-title">Aportación <i>creciente anual</i></div>
+      <div class="section-desc">A medida que el salario aumenta con los años, es habitual incrementar la aportación mensual. Esta sección cuantifica el impacto de aumentar la aportación un pequeño porcentaje cada año frente a mantenerla fija.</div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header"><span class="card-title">Incremento anual de la aportación</span></div>
+      <div style="padding:16px 20px">
+        <div class="slider-row">
+          <input type="range" id="sGrowth" min="0" max="10" step=".5" value="3">
+          <span class="slider-val" id="vGrowth" style="color:var(--purple)">3%</span>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:10px">Un incremento del 3% anual equivale aproximadamente a mantener el porcentaje de ahorro constante si el salario crece con la inflación.</div>
+      </div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header"><span class="card-title">Capital acumulado — fija vs creciente</span></div>
+      <div class="chart-area"><canvas id="growChart" height="180"></canvas></div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1a6b46"></div>Aportación creciente</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d0cdc5"></div>Aportación fija (referencia)</div>
+      </div>
+    </div>
+
+    <div class="grid-3 mb-14">
+      <div class="stat-card"><div class="stat-lbl">Con aportación fija</div><div class="stat-val stat-green" id="growFixed">—</div><div class="stat-sub" id="growFixedI">—</div></div>
+      <div class="stat-card"><div class="stat-lbl">Con aportación creciente</div><div class="stat-val" style="color:var(--purple)" id="growGrow">—</div><div class="stat-sub" id="growGrowI">—</div></div>
+      <div class="stat-card"><div class="stat-lbl">Diferencia a favor</div><div class="stat-val stat-gold" id="growDiff">—</div><div class="stat-sub">Impacto del incremento anual</div></div>
+    </div>
+
+    <div class="info-box">
+      <strong>El efecto del pequeño incremento anual:</strong><br>
+      Incrementar la aportación un 3% cada año —equivalente a una subida salarial modesta— puede suponer una diferencia de cientos de miles de euros a 30-40 años vista. El secreto está en que el incremento también se capitaliza durante toda la vida de la inversión.
+    </div>
+  </section>
+
+  <!-- ══ INVERSA ══ -->
+  <section class="section" id="sec-inversa">
+    <div class="section-header">
+      <div class="section-eyebrow">Planificación por objetivo</div>
+      <div class="section-title">Calculadora <i>inversa</i></div>
+      <div class="section-desc">En lugar de calcular cuánto se acumulará con una aportación dada, esta herramienta responde a la pregunta inversa: ¿cuánto hay que aportar mensualmente para alcanzar un objetivo de capital concreto en un número determinado de años?</div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="card" style="overflow:visible">
+        <div class="card-header"><span class="card-title">Define tu objetivo</span></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label class="slider-label">Objetivo de capital final (€)</label>
+            <input type="number" class="inv-input" id="invTarget" value="500000" min="1000" step="1000">
+          </div>
+          <div>
+            <label class="slider-label">Años para alcanzarlo</label>
+            <div class="slider-row"><input type="range" id="invYears" min="5" max="50" step="1" value="30"><span class="slider-val" id="vInvYears">30</span></div>
+          </div>
+          <div>
+            <label class="slider-label">Rentabilidad anual esperada</label>
+            <div class="slider-row"><input type="range" id="invRate" min="1" max="15" step=".5" value="7"><span class="slider-val" id="vInvRate">7%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Aportación mensual necesaria</span></div>
+        <div style="padding:24px 20px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div class="inv-result-lbl">Debes aportar cada mes</div>
+            <div class="inv-result" id="invResult">—</div>
+          </div>
+          <hr class="divider">
+          <div class="grid-2" style="gap:10px">
+            <div><div class="stat-lbl">Total aportado</div><div style="font-family:var(--font-serif);font-size:18px;color:var(--text2)" id="invInvested">—</div></div>
+            <div><div class="stat-lbl">Intereses generados</div><div style="font-family:var(--font-serif);font-size:18px;color:var(--accent)" id="invInterest">—</div></div>
+            <div><div class="stat-lbl">% de rendimiento</div><div style="font-family:var(--font-serif);font-size:18px;color:var(--accent2)" id="invPct">—</div></div>
+            <div><div class="stat-lbl">Objetivo</div><div style="font-family:var(--font-serif);font-size:18px;color:var(--gold)" id="invTargetDisplay">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>¿Para qué sirve la calculadora inversa?</strong><br>
+      Es especialmente útil para planificar objetivos concretos como la independencia financiera (FIRE), la jubilación, la compra de un inmueble o financiar la educación de un hijo. En lugar de partir de lo que se puede ahorrar, se parte de lo que se quiere tener.
+    </div>
+  </section>
+
+  <!-- ══ DIVIDENDOS ══ -->
+  <section class="section" id="sec-dividendos">
+    <div class="section-header">
+      <div class="section-eyebrow">Renta pasiva</div>
+      <div class="section-title">Dividendos <i>estimados</i></div>
+      <div class="section-desc">Los dividendos son la distribución periódica de beneficios que algunas empresas y REITs realizan a sus accionistas. Esta sección muestra los dividendos estimados de los activos de la cartera que generan rentas, y su evolución si se reinvierten.</div>
+    </div>
+
+    <div id="divContent">
+      <!-- Renderizado dinámico -->
+    </div>
+  </section>
+
+  <!-- ══ REBALANCEO ══ -->
+  <section class="section" id="sec-rebalanceo">
+    <div class="section-header">
+      <div class="section-eyebrow">Mantenimiento de cartera</div>
+      <div class="section-title">Calculadora de <i>rebalanceo</i></div>
+      <div class="section-desc">Con el tiempo, los distintos activos crecen a ritmos diferentes, desviando la distribución real de la distribución objetivo. El rebalanceo consiste en comprar o vender activos para restaurar los pesos originales. Esta herramienta calcula exactamente qué hay que comprar o vender.</div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header"><span class="card-title">Valor actual de la cartera</span><span class="card-badge">Introduce el valor real de cada posición</span></div>
+      <div style="padding:14px 20px 0" id="rebalInputs"></div>
+      <div style="padding:10px 20px 16px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:11px;color:var(--text2)">Total cartera:</span>
+          <span style="font-family:var(--font-serif);font-size:20px;color:var(--text)" id="rebalTotal">0€</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header"><span class="card-title">Acciones de rebalanceo recomendadas</span></div>
+      <div id="rebalResult"></div>
+    </div>
+
+    <div class="info-box">
+      <strong>¿Con qué frecuencia rebalancear?</strong><br>
+      La mayoría de inversores pasivos rebalancean una vez al año o cuando algún activo se desvía más de un 5% de su peso objetivo. El rebalanceo excesivo genera costes de transacción que pueden superar los beneficios de mantener los pesos exactos.
+    </div>
+  </section>
+
+  <!-- ══ AHORRO ══ -->
+  <section class="section" id="sec-ahorro">
+    <div class="section-header">
+      <div class="section-eyebrow">Gestión del presupuesto personal</div>
+      <div class="section-title">Regla del <i>50 / 30 / 20</i></div>
+      <div class="section-desc">La regla del 50/30/20 es una de las guías de presupuesto personal más utilizadas. Propone destinar el 50% del salario neto a necesidades básicas, el 30% a ocio y gastos discrecionales, y el 20% restante al ahorro e inversión.</div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Salario neto mensual</span></div>
+        <div style="padding:20px">
+          <label class="slider-label">Introduce el salario neto mensual</label>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <input type="number" class="salary-input-big" id="salaryInput" placeholder="1.000" min="0">
+            <span style="font-family:var(--font-serif);font-size:20px" id="salaryPct">—</span>
+          </div>
+          <div id="budgetBars"><div style="font-size:11px;color:var(--text3)">Introduce el salario para ver el desglose recomendado.</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Resumen 50/30/20</span></div>
+        <div style="padding:20px" id="budgetSummary"><div style="font-size:11px;color:var(--text3)">Introduce el salario para ver el resumen.</div></div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>¿Es estricta esta regla?</strong><br>
+      No. Es una guía de referencia. Para quienes tienen salarios bajos, el 50% en necesidades puede ser insuficiente. Para quienes tienen ingresos altos, el 20% de ahorro puede ser conservador. Lo importante es tener un sistema claro y revisarlo periódicamente.
+    </div>
+  </section>
+
+  <!-- ══ RENTABILIDAD ══ -->
+  <section class="section" id="sec-rentabilidad">
+    <div class="section-header">
+      <div class="section-eyebrow">Referencia histórica por activo</div>
+      <div class="section-title">Rentabilidad <i>estimada</i></div>
+      <div class="section-desc">Cada activo de la cartera tiene una rentabilidad histórica de referencia que puede modificarse desde el editor de cartera. Esta sección muestra el desglose por activo y la rentabilidad ponderada resultante de la cartera.</div>
+    </div>
+
+    <div class="card mb-14">
+      <div class="card-header">
+        <span class="card-title">Rentabilidad ponderada de la cartera</span>
+        <span class="card-badge" id="rentChip">—</span>
+      </div>
+      <div style="padding:20px 22px;border-bottom:1px solid var(--border)">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px">Rentabilidad anual media ponderada estimada</div>
+        <div style="font-family:var(--font-serif);font-size:44px;color:var(--accent);letter-spacing:-1.5px;line-height:1" id="rentVal">—</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:6px" id="rentSub">—</div>
+      </div>
+      <div id="rentGrid"></div>
+      <div class="note-strip note-green">⚠️ Las rentabilidades son <strong>estimaciones históricas orientativas</strong> y pueden editarse desde el panel de la cartera. Rentabilidades pasadas no garantizan resultados futuros. Esta herramienta no constituye asesoramiento financiero de ningún tipo.</div>
+    </div>
+  </section>
+
+  <!-- ══ CALCULADORA RENTABILIDAD ══ -->
+  <section class="section" id="sec-calcrental">
+    <div class="section-header">
+      <div class="section-eyebrow">Análisis de posición</div>
+      <div class="section-title">Calculadora de <i>rentabilidad</i></div>
+      <div class="section-desc">Introduce el precio de compra y el precio actual de cualquier activo para obtener un análisis completo: ganancia o pérdida en euros, rentabilidad porcentual, rentabilidad anualizada y punto de equilibrio. También permite simular un precio objetivo futuro.</div>
+    </div>
+
+    <!-- Inputs principales -->
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Datos de la posición</span></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label class="slider-label">Nombre del activo (opcional)</label>
+            <input type="text" class="inv-input" id="crName" placeholder="Ej: S&P 500, Tesla, Realty Income…" style="font-size:14px" oninput="crAutoSearch()">
+            <div id="crSearchStatus" style="font-size:10px;color:var(--text3);margin-top:4px;min-height:14px"></div>
+          </div>
+          <div class="grid-2" style="gap:10px">
+            <div>
+              <label class="slider-label">Precio de compra (€)</label>
+              <input type="number" class="inv-input" id="crBuy" placeholder="100.00" min="0" step="0.01" oninput="calcRental()">
+            </div>
+            <div>
+              <label class="slider-label">Precio actual (€)</label>
+              <input type="number" class="inv-input" id="crNow" placeholder="135.00" min="0" step="0.01" oninput="calcRental()">
+            </div>
+          </div>
+          <div class="grid-2" style="gap:10px">
+            <div>
+              <label class="slider-label">Cantidad de acciones / participaciones</label>
+              <input type="number" class="inv-input" id="crShares" value="1" min="0.0001" step="1" oninput="calcRental()">
+            </div>
+            <div>
+              <label class="slider-label">Años en cartera</label>
+              <input type="number" class="inv-input" id="crYears" value="1" min="0.1" step="0.5" oninput="calcRental()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados principales -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Resultado de la posición</span><span class="card-badge" id="crAssetName">—</span></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div id="crResultHero" style="padding:16px;border-radius:var(--r);background:var(--surface2);border:1px solid var(--border);text-align:center">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px">Ganancia / Pérdida total</div>
+            <div style="font-family:var(--font-serif);font-size:40px;letter-spacing:-1px;line-height:1" id="crGain">—</div>
+            <div style="font-size:13px;margin-top:6px" id="crGainPct">—</div>
+          </div>
+          <div class="grid-2" style="gap:8px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 12px">
+              <div class="stat-lbl">Capital invertido</div>
+              <div style="font-family:var(--font-serif);font-size:16px" id="crInvested">—</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 12px">
+              <div class="stat-lbl">Valor actual</div>
+              <div style="font-family:var(--font-serif);font-size:16px" id="crValue">—</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 12px">
+              <div class="stat-lbl">Rentabilidad anualizada</div>
+              <div style="font-family:var(--font-serif);font-size:16px" id="crCAGR">—</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 12px">
+              <div class="stat-lbl">Para recuperar pérdida</div>
+              <div style="font-family:var(--font-serif);font-size:16px" id="crBreakeven">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simulador de precio objetivo -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <span class="card-title">Simulador de precio objetivo</span>
+        <span class="card-badge">¿Cuánto ganaría si llega a X€?</span>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+          <div style="flex:1;min-width:160px">
+            <label class="slider-label">Precio objetivo (€)</label>
+            <input type="number" class="inv-input" id="crTarget" placeholder="200.00" min="0" step="0.01" oninput="calcTarget()" style="font-size:16px">
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label class="slider-label">Años para alcanzarlo</label>
+            <div class="slider-row"><input type="range" id="crTargetYears" min="1" max="30" step="1" value="5" oninput="calcTarget()"><span class="slider-val" id="vCrTargetYears" style="font-size:16px">5</span></div>
+          </div>
+        </div>
+        <div id="crTargetResult" style="background:var(--accent-bg);border:1px solid #c3e6d5;border-radius:var(--rsm);padding:12px 16px;font-size:11px;color:var(--text2);line-height:1.8">
+          Introduce un precio objetivo para ver la simulación.
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial de operaciones -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <span class="card-title">Comparador de múltiples posiciones</span>
+        <button class="card-action" onclick="crAddRow()">+ Añadir posición</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="crTable">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);background:var(--surface2)">
+              <th style="padding:10px 14px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:500">Activo</th>
+              <th style="padding:10px 14px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:500">Compra (€)</th>
+              <th style="padding:10px 14px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:500">Actual (€)</th>
+              <th style="padding:10px 14px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:500">Cant.</th>
+              <th style="padding:10px 14px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:500">Ganancia €</th>
+              <th style="padding:10px 14px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:500">Rent. %</th>
+              <th style="padding:10px 6px;text-align:center;font-size:9px;color:var(--text3)"></th>
+            </tr>
+          </thead>
+          <tbody id="crTableBody"></tbody>
+        </table>
+      </div>
+      <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:var(--text3)">Total cartera comparada:</span>
+        <span style="font-family:var(--font-serif);font-size:18px;color:var(--accent)" id="crTableTotal">—</span>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>¿Qué es la rentabilidad anualizada (CAGR)?</strong><br>
+      La CAGR (Compound Annual Growth Rate) es la tasa de crecimiento anual compuesta. Permite comparar inversiones con distintos horizontes temporales de forma justa. Una inversión que ha subido un 50% en 5 años tiene una CAGR del ~8.4% anual, no del 10% (50÷5).
+    </div>
+  </section>
+
+  <!-- ══ GLOSARIO ══ -->
+  <section class="section" id="sec-glosario">
+    <div class="section-header">
+      <div class="section-eyebrow">Conceptos clave</div>
+      <div class="section-title">Glosario <i>financiero</i></div>
+      <div class="section-desc">Definiciones de los principales conceptos utilizados en esta herramienta y en el mundo de la inversión a largo plazo.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px" id="glosarioList"></div>
+  </section>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ══════════════ MODAL ══════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeIfOutside(event)">
+<div class="modal">
+  <h2>Editar cartera</h2>
+  <p class="modal-sub">Personaliza los activos, porcentajes de cartera, rentabilidades históricas de referencia y yield de dividendo. Los porcentajes deben sumar exactamente 100%.</p>
+
+  <div class="modal-section-title">🏗 Activos Core</div>
+  <div class="edit-col-heads">
+    <span class="edit-col-head"></span>
+    <span class="edit-col-head">Activo</span>
+    <span class="edit-col-head">% cartera</span>
+    <span class="edit-col-head">Rent. %</span>
+    <span class="edit-col-head"></span>
+  </div>
+  <div id="editCore"></div>
+  <button class="add-asset-btn" onclick="addAsset(true)">+ Añadir activo core</button>
+
+  <div class="modal-section-title">🛰 Activos Satélite</div>
+  <div class="edit-col-heads">
+    <span class="edit-col-head"></span>
+    <span class="edit-col-head">Activo</span>
+    <span class="edit-col-head">% cartera</span>
+    <span class="edit-col-head">Yield div.%</span>
+    <span class="edit-col-head"></span>
+  </div>
+  <div id="editSat"></div>
+  <button class="add-asset-btn" onclick="addAsset(false)">+ Añadir activo satélite</button>
+
+  <div id="pctStatus" class="pct-status pct-ok"></div>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-accent" onclick="applyChanges()">✓ Aplicar cambios</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+let assets = [
+  { emoji:"🇺🇸", name:"S&P 500",       sub:"EE.UU. Large Cap",       pct:55, color:"#16a34a", core:true,  rent:10.5, divYield:0   },
+  { emoji:"🇪🇺", name:"Europa",         sub:"Eurozone / MSCI EU",      pct:14, color:"#2563eb", core:true,  rent:7.5,  divYield:0   },
+  { emoji:"🌎",  name:"Emergentes",     sub:"MSCI Emerging Markets",   pct:23, color:"#ea580c", core:true,  rent:8.5,  divYield:0   },
+  { emoji:"🏢",  name:"Realty Income",  sub:"REIT · NYSE: O",          pct:8,  color:"#ca8a04", core:false, rent:6.0,  divYield:5.1 },
+];
+
+let amount   = 200;
+let horizon  = 20;
+let editTmp  = [];
+let charts   = {};
+
+const glosario = [
+  {t:"DCA (Dollar Cost Averaging)", d:"Estrategia de inversión que consiste en aportar una cantidad fija de dinero a intervalos regulares (semanal, mensual), independientemente del precio del activo. Reduce el impacto de la volatilidad y elimina la necesidad de predecir el mercado."},
+  {t:"Interés compuesto", d:"Mecanismo por el cual los rendimientos generados se suman al capital y generan a su vez nuevos rendimientos. Cuanto mayor es el horizonte temporal, mayor es el efecto multiplicador. Einstein lo llamó 'la octava maravilla del mundo'."},
+  {t:"ETF (Exchange Traded Fund)", d:"Fondo de inversión que cotiza en bolsa como una acción. Replica el comportamiento de un índice (como el S&P 500) con comisiones muy bajas. Es el vehículo favorito de los inversores pasivos a largo plazo."},
+  {t:"REIT (Real Estate Investment Trust)", d:"Sociedad cotizada que invierte en bienes inmuebles y está obligada por ley a distribuir al menos el 90% de sus beneficios como dividendos. Permiten invertir en inmobiliario con liquidez de bolsa."},
+  {t:"Yield (rentabilidad por dividendo)", d:"Porcentaje que representa los dividendos anuales respecto al precio actual del activo. Un yield del 5% significa que por cada 100€ invertidos se reciben 5€ anuales en dividendos."},
+  {t:"Rebalanceo", d:"Proceso de ajustar los pesos de una cartera para devolverlos a su distribución objetivo. Con el tiempo, los activos que más suben representan un mayor porcentaje del total, aumentando el riesgo no deseado."},
+  {t:"Rentabilidad real vs nominal", d:"La rentabilidad nominal es el porcentaje de ganancia antes de descontar la inflación. La rentabilidad real descuenta el efecto inflacionario. Lo relevante para el inversor es siempre la rentabilidad real."},
+  {t:"Horizonte temporal", d:"Período de tiempo durante el cual se planea mantener la inversión sin necesitar el dinero. A mayor horizonte, mayor capacidad de absorber volatilidad y mayor potencial de capitalización compuesta."},
+  {t:"Activo core", d:"Núcleo de la cartera. Activos diversificados de alta calidad que forman la base de la estrategia a largo plazo, habitualmente ETFs de índices globales amplios como MSCI World o S&P 500."},
+  {t:"Activo satélite", d:"Posición complementaria al núcleo de la cartera con un objetivo específico: mayor rentabilidad potencial, dividendos, exposición temática o sectorial. Representan un porcentaje menor de la cartera."},
+  {t:"Regla 50/30/20", d:"Método de presupuesto personal que recomienda destinar el 50% del salario neto a necesidades básicas (vivienda, alimentación), el 30% a gastos discrecionales y el 20% al ahorro e inversión."},
+  {t:"Índice S&P 500", d:"Índice bursátil que agrupa a las 500 empresas más grandes de EE.UU. por capitalización. Ha generado una rentabilidad media anual aproximada del 10% desde su creación. Es el índice de referencia del mercado estadounidense."},
+];
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const $  = id => document.getElementById(id);
+const fmt= n => n>=1e6?(n/1e6).toFixed(2)+'M€':n>=1e3?(n/1e3).toFixed(1)+'k€':n.toFixed(0)+'€';
+const fmtS=n=>n.toFixed(2)+'€';
+const calcFV=(m,y,r)=>{ if(r===0)return m*12*y; const rm=r/12,n=y*12; return m*((Math.pow(1+rm,n)-1)/rm); };
+const wRent=()=>assets.reduce((s,a)=>s+a.pct/100*(a.rent/100),0);
+const destroyChart=id=>{ if(charts[id]){charts[id].destroy();delete charts[id];} };
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+const sectionNames = {
+  inicio:'Inicio', cartera:'Mi cartera', interes:'Interés compuesto',
+  escenarios:'Escenarios', inflacion:'Inflación real', creciente:'Aportación creciente',
+  inversa:'Calculadora inversa', dividendos:'Dividendos', rebalanceo:'Rebalanceo',
+  ahorro:'Regla del 20%', rentabilidad:'Rentabilidad', calcrental:'Calc. rentabilidad', glosario:'Glosario'
+};
+
+function showSection(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  $('sec-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{ if(n.textContent.trim().includes(sectionNames[name].substring(0,5))) n.classList.add('active'); });
+  $('topbarSection').textContent = sectionNames[name]||name;
+  closeSidebar();
+  // render section-specific
+  if(name==='interes')    renderMainChart();
+  if(name==='escenarios') renderScenarios();
+  if(name==='inflacion')  renderInflacion();
+  if(name==='creciente')  renderCreciente();
+  if(name==='inversa')    renderInversa();
+  if(name==='dividendos') renderDividendos();
+  if(name==='rebalanceo') renderRebalanceo();
+  if(name==='rentabilidad') renderRentabilidad();
+  if(name==='calcrental')   { initCrTable(); calcRental(); }
+  if(name==='glosario')   renderGlosario();
+}
+
+function toggleSidebar(){ $('sidebar').classList.toggle('open'); $('mobileOverlay').classList.toggle('open'); }
+function closeSidebar()  { $('sidebar').classList.remove('open'); $('mobileOverlay').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+  const btn=document.querySelector('.theme-toggle');
+  btn.textContent=document.body.classList.contains('dark')?'☀️':'🌙';
+  setTimeout(()=>{ Object.keys(charts).forEach(k=>{ const c=charts[k]; if(c)c.update(); }); },100);
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER ALLOC
+// ═══════════════════════════════════════════════════════
+function renderAlloc(){
+  const wr=(wRent()*100).toFixed(2);
+  $('stat-amount').textContent = amount+'€';
+  $('stat-rent').textContent   = wr+'%';
+  $('stat-activos').textContent= assets.length;
+  $('stat-anual').textContent  = fmt(amount*12);
+
+  $('allocBar').innerHTML=assets.map(a=>`<div class="alloc-seg" style="width:${a.pct}%;background:${a.color}"></div>`).join('');
+
+  ['allocCore','allocSat'].forEach(id=>$(id).innerHTML='');
+  const hasSat=assets.some(a=>!a.core);
+  $('satSep').style.display=hasSat?'block':'none';
+
+  assets.forEach(a=>{
+    const euros=((a.pct/100)*amount).toFixed(2);
+    const el=document.createElement('div'); el.className='asset-row';
+    el.innerHTML=`<div class="asset-dot" style="background:${a.color}"></div><div class="asset-info"><div class="asset-name">${a.emoji} ${a.name}</div><div class="asset-sub">${a.sub}</div></div><span class="asset-tag ${a.core?'tag-core':'tag-sat'}">${a.core?'core':'satélite'}</span><div class="asset-right"><span class="asset-eur" style="color:${a.color}">${euros}€</span><span class="asset-pct">${a.pct}%</span></div>`;
+    $(a.core?'allocCore':'allocSat').appendChild(el);
+  });
+
+  renderPie();
+  renderHomeMilestones();
+}
+
+// ═══════════════════════════════════════════════════════
+// PIE CHART SVG
+// ═══════════════════════════════════════════════════════
+function renderPie(){
+  const svg=$('pieChart'), legend=$('pieLegend');
+  svg.innerHTML=''; legend.innerHTML='';
+  let cumAngle=0;
+  const paths=[];
+  assets.forEach(a=>{
+    const angle=(a.pct/100)*2*Math.PI;
+    const x1=Math.cos(cumAngle), y1=Math.sin(cumAngle);
+    const x2=Math.cos(cumAngle+angle), y2=Math.sin(cumAngle+angle);
+    const large=angle>Math.PI?1:0;
+    if(a.pct>0&&a.pct<100){
+      const d=`M0,0 L${x1},${y1} A1,1,0,${large},1,${x2},${y2}Z`;
+      paths.push(`<path d="${d}" fill="${a.color}" opacity=".88"/>`);
+    } else if(a.pct===100){
+      paths.push(`<circle cx="0" cy="0" r="1" fill="${a.color}"/>`);
+    }
+    cumAngle+=angle;
+    legend.innerHTML+=`<div class="pie-legend-row"><div class="pie-legend-dot" style="background:${a.color}"></div><span>${a.emoji} ${a.name}</span><span style="margin-left:auto;color:var(--text3)">${a.pct}%</span></div>`;
+  });
+  svg.innerHTML=paths.join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME MILESTONES
+// ═══════════════════════════════════════════════════════
+function renderHomeMilestones(){
+  [20,30,40].forEach(y=>{
+    let fv=0; assets.forEach(a=>fv+=calcFV((a.pct/100)*amount,y,a.rent/100));
+    const inv=amount*12*y, gain=fv-inv, mult=(fv/inv).toFixed(1);
+    $(`home-m${y}`).textContent=fmt(fv);
+    $(`home-m${y}g`).textContent='+'+fmt(gain)+' de rendimiento';
+    $(`home-m${y}i`).textContent='Aportado: '+fmt(inv);
+    $(`home-m${y}x`).textContent='×'+mult+' el capital';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN CHART
+// ═══════════════════════════════════════════════════════
+function renderMainChart(){
+  const milEl=$('milestones'); milEl.innerHTML='';
+  const labels=[], dTotal=[], dInvested=[], dDiv=[];
+  const divAssets=assets.filter(a=>a.divYield>0);
+  const hasDivs=divAssets.length>0;
+  $('legendDiv').style.display=hasDivs?'flex':'none';
+
+  for(let y=0;y<=horizon;y++){
+    labels.push(y===0?'Hoy':`Año ${y}`);
+    let t=0; assets.forEach(a=>t+=calcFV((a.pct/100)*amount,y,a.rent/100));
+    dTotal.push(Math.round(t));
+    dInvested.push(Math.round(amount*12*y));
+    if(hasDivs){ let dd=0; divAssets.forEach(a=>dd+=((a.pct/100)*amount)*12*y*(a.divYield/100)); dDiv.push(Math.round(dd)); }
+  }
+  $('chartFinalVal').textContent='En '+horizon+' años: '+fmt(dTotal[dTotal.length-1]);
+
+  destroyChart('main');
+  const datasets=[
+    {label:'Capital total',data:dTotal,borderColor:'#1a6b46',backgroundColor:'rgba(26,107,70,.07)',borderWidth:2,fill:true,tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#1a6b46'},
+    {label:'Capital aportado',data:dInvested,borderColor:'#d0cdc5',backgroundColor:'rgba(208,205,197,.25)',borderWidth:1.5,fill:true,tension:.1,pointRadius:0,borderDash:[5,4]},
+  ];
+  if(hasDivs) datasets.push({label:'Dividendos acumulados',data:dDiv,borderColor:'#92620e',borderWidth:1.5,fill:false,tension:.4,pointRadius:0,borderDash:[2,3]});
+  charts['main']=new Chart($('mainChart').getContext('2d'),{type:'line',data:{labels,datasets},options:chartOpts()});
+
+  [10,20,30,40].forEach(y=>{
+    if(y>horizon) return;
+    let fv=0; assets.forEach(a=>fv+=calcFV((a.pct/100)*amount,y,a.rent/100));
+    const inv=amount*12*y, mult=(fv/inv).toFixed(1);
+    const d=document.createElement('div'); d.className='milestone';
+    d.innerHTML=`<div class="ms-years">En ${y} años</div><div class="ms-total">${fmt(fv)}</div><div class="ms-gain">+${fmt(fv-inv)} de rendimiento</div><div class="ms-invested">Aportado: ${fmt(inv)}</div><div class="ms-mult">×${mult} el capital</div>`;
+    milEl.appendChild(d);
+  });
+}
+
+function setH(y,btn){ horizon=y; document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); renderMainChart(); }
+function setHSlider(){ horizon=+$('sliderYears').value; document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.chart-tab')[4].classList.add('active'); renderMainChart(); }
+
+function chartOpts(){ return { responsive:true, interaction:{mode:'index',intersect:false}, plugins:{legend:{display:false},tooltip:{backgroundColor:'var(--surface)',borderColor:'var(--border)',borderWidth:1,titleColor:'var(--text2)',bodyColor:'var(--text)',padding:12,titleFont:{family:'Plus Jakarta Sans',size:11},bodyFont:{family:'Plus Jakarta Sans',size:12},callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}}, scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'var(--text3)',font:{family:'Plus Jakarta Sans',size:11},maxTicksLimit:10}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'var(--text3)',font:{family:'Plus Jakarta Sans',size:11},callback:v=>fmt(v)}}}}; }
+
+// ═══════════════════════════════════════════════════════
+// ESCENARIOS
+// ═══════════════════════════════════════════════════════
+function renderScenarios(){
+  const bear=+$('sBear').value/100, base=+$('sBase').value/100, bull=+$('sBull').value/100;
+  const y=horizon;
+  $('scYears').textContent=y+' años';
+  const fvB=calcFV(amount,y,bear), fvBs=calcFV(amount,y,base), fvBu=calcFV(amount,y,bull);
+  const inv=amount*12*y;
+  $('scBearVal').textContent=fmt(fvB); $('scBearSub').textContent=`×${(fvB/inv).toFixed(1)} el capital — ${+$('sBear').value}% anual`;
+  $('scBaseVal').textContent=fmt(fvBs); $('scBaseSub').textContent=`×${(fvBs/inv).toFixed(1)} el capital — ${+$('sBase').value}% anual`;
+  $('scBullVal').textContent=fmt(fvBu); $('scBullSub').textContent=`×${(fvBu/inv).toFixed(1)} el capital — ${+$('sBull').value}% anual`;
+
+  const labels=[], dBear=[], dBase=[], dBull=[], dInv=[];
+  for(let i=0;i<=y;i++){
+    labels.push(i===0?'Hoy':`Año ${i}`);
+    dBear.push(Math.round(calcFV(amount,i,bear))); dBase.push(Math.round(calcFV(amount,i,base)));
+    dBull.push(Math.round(calcFV(amount,i,bull))); dInv.push(Math.round(amount*12*i));
+  }
+  destroyChart('sc');
+  charts['sc']=new Chart($('scChart').getContext('2d'),{type:'line',data:{labels,datasets:[
+    {label:'Pesimista',data:dBear,borderColor:'#b91c1c',backgroundColor:'rgba(185,28,28,.05)',borderWidth:1.5,fill:true,tension:.4,pointRadius:0},
+    {label:'Base',data:dBase,borderColor:'#1a6b46',backgroundColor:'rgba(26,107,70,.07)',borderWidth:2,fill:true,tension:.4,pointRadius:0},
+    {label:'Optimista',data:dBull,borderColor:'#1d4ed8',backgroundColor:'rgba(29,78,216,.05)',borderWidth:1.5,fill:true,tension:.4,pointRadius:0},
+    {label:'Aportado',data:dInv,borderColor:'#d0cdc5',borderWidth:1,fill:false,tension:.1,pointRadius:0,borderDash:[5,4]},
+  ]},options:chartOpts()});
+}
+
+['sBear','sBase','sBull'].forEach(id=>$( id).addEventListener('input',e=>{
+  $('v'+id.slice(1).charAt(0).toUpperCase()+id.slice(2)).textContent=e.target.value+'%';
+  if($('sec-escenarios').classList.contains('active')) renderScenarios();
+}));
+
+// ═══════════════════════════════════════════════════════
+// INFLACIÓN
+// ═══════════════════════════════════════════════════════
+function renderInflacion(){
+  const infl=+$('sInflation').value/100;
+  const y=horizon; $('inflYears').textContent=y;
+  let fvNom=0; assets.forEach(a=>fvNom+=calcFV((a.pct/100)*amount,y,a.rent/100));
+  const fvReal=fvNom/Math.pow(1+infl,y);
+  $('inflNom').textContent=fmt(fvNom); $('inflReal').textContent=fmt(fvReal);
+  $('inflBadge').textContent=`Inflación: ${+$('sInflation').value}% anual`;
+
+  const labels=[], dNom=[], dReal=[], dInv=[];
+  for(let i=0;i<=y;i++){
+    labels.push(i===0?'Hoy':`Año ${i}`);
+    let t=0; assets.forEach(a=>t+=calcFV((a.pct/100)*amount,i,a.rent/100));
+    dNom.push(Math.round(t)); dReal.push(Math.round(t/Math.pow(1+infl,i))); dInv.push(Math.round(amount*12*i));
+  }
+  destroyChart('infl');
+  charts['infl']=new Chart($('inflChart').getContext('2d'),{type:'line',data:{labels,datasets:[
+    {label:'Capital nominal',data:dNom,borderColor:'#1a6b46',backgroundColor:'rgba(26,107,70,.07)',borderWidth:2,fill:true,tension:.4,pointRadius:0},
+    {label:'Capital real',data:dReal,borderColor:'#b91c1c',backgroundColor:'rgba(185,28,28,.06)',borderWidth:2,fill:true,tension:.4,pointRadius:0},
+    {label:'Aportado',data:dInv,borderColor:'#d0cdc5',borderWidth:1.5,fill:false,tension:.1,pointRadius:0,borderDash:[5,4]},
+  ]},options:chartOpts()});
+}
+$('sInflation').addEventListener('input',e=>{ $('vInflation').textContent=e.target.value+'%'; if($('sec-inflacion').classList.contains('active')) renderInflacion(); });
+
+// ═══════════════════════════════════════════════════════
+// CRECIENTE
+// ═══════════════════════════════════════════════════════
+function renderCreciente(){
+  const g=+$('sGrowth').value/100, y=horizon, r=wRent();
+  const labels=[], dFix=[], dGrow=[];
+  let growTotal=0, fixTotal=0, mGrow=amount;
+
+  for(let i=0;i<=y;i++){
+    labels.push(i===0?'Hoy':`Año ${i}`);
+    dFix.push(Math.round(calcFV(amount,i,r)));
+    // creciente: simular año a año
+    if(i===0){ dGrow.push(0); }
+    else{
+      let acc=0;
+      let m=amount;
+      for(let j=0;j<i;j++){
+        acc=acc*(1+r/12*12)+ m*((Math.pow(1+r/12,12)-1)/(r/12||.0001));
+        m*=(1+g);
+      }
+      dGrow.push(Math.round(acc));
+    }
+  }
+
+  const fixFV=dFix[dFix.length-1], growFV=dGrow[dGrow.length-1];
+  let invFix=amount*12*y, invGrow=0, m=amount;
+  for(let j=0;j<y;j++){ invGrow+=m*12; m*=(1+g); }
+
+  $('growFixed').textContent=fmt(fixFV);  $('growFixedI').textContent='Aportado: '+fmt(invFix);
+  $('growGrow').textContent=fmt(growFV);  $('growGrowI').textContent='Aportado: '+fmt(invGrow);
+  $('growDiff').textContent='+'+fmt(Math.max(0,growFV-fixFV));
+
+  destroyChart('grow');
+  charts['grow']=new Chart($('growChart').getContext('2d'),{type:'line',data:{labels,datasets:[
+    {label:'Aportación creciente',data:dGrow,borderColor:'#6d28d9',backgroundColor:'rgba(109,40,217,.07)',borderWidth:2,fill:true,tension:.4,pointRadius:0},
+    {label:'Aportación fija',data:dFix,borderColor:'#d0cdc5',backgroundColor:'rgba(208,205,197,.2)',borderWidth:1.5,fill:true,tension:.1,pointRadius:0,borderDash:[5,4]},
+  ]},options:chartOpts()});
+}
+$('sGrowth').addEventListener('input',e=>{ $('vGrowth').textContent=e.target.value+'%'; if($('sec-creciente').classList.contains('active')) renderCreciente(); });
+
+// ═══════════════════════════════════════════════════════
+// INVERSA
+// ═══════════════════════════════════════════════════════
+function renderInversa(){
+  const target=+$('invTarget').value||0;
+  const y=+$('invYears').value, r=+$('invRate').value/100;
+  const rm=r/12, n=y*12;
+  const monthly=target*(rm/(Math.pow(1+rm,n)-1));
+  const invested=monthly*n, interest=target-invested;
+  $('invResult').textContent=fmt(monthly)+'/mes';
+  $('invInvested').textContent=fmt(invested);
+  $('invInterest').textContent=fmt(interest);
+  $('invPct').textContent=((interest/invested)*100).toFixed(1)+'%';
+  $('invTargetDisplay').textContent=fmt(target);
+}
+['invTarget','invYears','invRate'].forEach(id=>{
+  $(id).addEventListener('input',e=>{
+    if(id==='invYears'){ $('vInvYears').textContent=e.target.value; }
+    if(id==='invRate'){  $('vInvRate').textContent=e.target.value+'%'; }
+    if($('sec-inversa').classList.contains('active')) renderInversa();
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// DIVIDENDOS
+// ═══════════════════════════════════════════════════════
+function renderDividendos(){
+  const divAssets=assets.filter(a=>a.divYield>0);
+  const el=$('divContent'); el.innerHTML='';
+
+  if(divAssets.length===0){
+    el.innerHTML=`<div class="card"><div style="padding:40px 24px;text-align:center"><div style="font-size:36px;margin-bottom:12px">💤</div><div style="font-size:13px;color:var(--text2);line-height:1.8">Ningún activo de la cartera actual genera dividendos.<br>Para activarlos, haz clic en <strong>Editar cartera</strong> e introduce el <em>yield</em> estimado del activo satélite deseado.</div></div></div>`;
+    return;
+  }
+
+  // Resumen total
+  const totalDivMes=divAssets.reduce((s,a)=>s+((a.pct/100)*amount)*(a.divYield/100/12),0);
+  const totalDivAno=totalDivMes*12;
+  el.innerHTML+=`<div class="card mb-14"><div class="card-header"><span class="card-title">Dividendo mensual total estimado</span><span class="yield-pill">${fmt(totalDivAno)}/año</span></div><div style="padding:16px 20px;border-bottom:1px solid var(--border)"><div class="div-lbl">Suma de todos los activos con yield</div><div class="div-big">${fmtS(totalDivMes)}</div></div><div class="note-strip note-gold">💡 El dividendo total crece con el capital acumulado. Si se reinvierten, el efecto compuesto acelera significativamente el crecimiento del patrimonio a largo plazo.</div></div>`;
+
+  // Por activo
+  divAssets.forEach(a=>{
+    const aport=(a.pct/100)*amount, yld=a.divYield/100;
+    const divM=aport*(yld/12), divA=aport*12*yld, pos1=aport*12, dm1=pos1*(yld/12);
+    el.innerHTML+=`<div class="card mb-14"><div class="card-header"><span class="card-title">${a.emoji} ${a.name}</span><span class="yield-pill">${a.divYield.toFixed(1)}% yield</span></div><div style="display:grid;grid-template-columns:1fr 1fr"><div style="padding:12px 20px;border-right:1px solid var(--bg)"><div class="div-cell-lbl">Dividendo mensual</div><div class="div-cell-val" style="color:${a.color}">${fmtS(divM)}</div></div><div style="padding:12px 20px"><div class="div-cell-lbl">Aportación mensual</div><div class="div-cell-val">${fmtS(aport)}</div></div><div style="padding:12px 20px;border-right:1px solid var(--bg);border-top:1px solid var(--bg)"><div class="div-cell-lbl">Dividendo anual est.</div><div class="div-cell-val">${fmtS(divA)}</div></div><div style="padding:12px 20px;border-top:1px solid var(--bg)"><div class="div-cell-lbl">Posición en 1 año</div><div class="div-cell-val">${fmt(pos1)}</div></div></div></div>`;
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// REBALANCEO
+// ═══════════════════════════════════════════════════════
+function renderRebalanceo(){
+  const el=$('rebalInputs'); el.innerHTML='';
+  assets.forEach((a,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:12px;margin-bottom:10px';
+    row.innerHTML=`<div style="width:180px;font-size:12px;">${a.emoji} ${a.name} <span style="color:var(--text3);font-size:10px">(obj. ${a.pct}%)</span></div><input type="number" class="inv-input" id="rebal-${i}" value="0" min="0" style="width:130px;font-size:16px;padding:8px 12px" placeholder="Valor actual €"><span style="font-size:11px;color:var(--text3)" id="rebal-pct-${i}">—</span>`;
+    row.querySelector('input').addEventListener('input',calcRebalanceo);
+    el.appendChild(row);
+  });
+  calcRebalanceo();
+}
+
+function calcRebalanceo(){
+  let total=0;
+  assets.forEach((_,i)=>total+=parseFloat($(`rebal-${i}`).value)||0);
+  $('rebalTotal').textContent=fmt(total);
+  assets.forEach((a,i)=>{
+    const val=parseFloat($(`rebal-${i}`).value)||0;
+    const actualPct=total>0?(val/total*100):0;
+    $(`rebal-pct-${i}`).textContent=actualPct.toFixed(1)+'%';
+  });
+
+  const el=$('rebalResult'); el.innerHTML='';
+  if(total===0){ el.innerHTML='<div style="padding:20px;font-size:11px;color:var(--text3)">Introduce el valor actual de cada posición para ver las recomendaciones.</div>'; return; }
+
+  assets.forEach((a,i)=>{
+    const val=parseFloat($(`rebal-${i}`).value)||0;
+    const target=total*(a.pct/100), diff=target-val;
+    const row=document.createElement('div'); row.className='rebal-row';
+    const abs=Math.abs(diff);
+    const pill=diff>5?`<span class="rebal-pill rebal-buy">Comprar</span>`:diff<-5?`<span class="rebal-pill rebal-sell">Vender</span>`:`<span class="rebal-pill rebal-ok">En orden</span>`;
+    row.innerHTML=`<div class="asset-dot" style="background:${a.color}"></div><div class="rebal-name">${a.emoji} ${a.name}<div style="font-size:9px;color:var(--text3)">Actual: ${fmt(val)} → Objetivo: ${fmt(target)}</div></div>${pill}<div class="rebal-val" style="color:${diff>5?'var(--accent)':diff<-5?'var(--red)':'var(--text3)'}">${diff>5?'+':''}${diff<-5?'-':''}${diff===0?'—':fmt(abs)}</div>`;
+    el.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// AHORRO (REGLA 20%)
+// ═══════════════════════════════════════════════════════
+function renderRule(){
+  const salary=parseFloat($('salaryInput').value)||0;
+  if(salary<=0){ $('budgetBars').innerHTML='<div style="font-size:11px;color:var(--text3)">Introduce el salario para ver el desglose recomendado.</div>'; $('salaryPct').textContent='—'; $('salaryPct').style.color='var(--text3)'; $('budgetSummary').innerHTML='<div style="font-size:11px;color:var(--text3)">Introduce el salario para ver el resumen.</div>'; return; }
+  const pct=((amount/salary)*100).toFixed(1);
+  $('salaryPct').textContent=pct+'%';
+  $('salaryPct').style.color=parseFloat(pct)>=20?'var(--accent)':parseFloat(pct)>=10?'var(--gold)':'var(--red)';
+
+  const items=[
+    {label:'🏠 Necesidades (50%)', pct:50, color:'var(--accent2)', val:salary*.5},
+    {label:'🎮 Ocio y estilo (30%)', pct:30, color:'var(--gold)', val:salary*.3},
+    {label:'💰 Ahorro / DCA (20%)', pct:20, color:'var(--accent)', val:salary*.2, isInv:true},
+  ];
+  $('budgetBars').innerHTML=items.map(b=>{
+    const v=b.isInv?amount:b.val, w=Math.min((v/salary)*100,100);
+    return `<div class="budget-row"><div class="budget-label">${b.label}</div><div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${w}%;background:${b.color}"></div></div><div class="budget-val" style="color:${b.color}">${b.isInv?amount+'€':fmt(b.val)}</div></div>`;
+  }).join('');
+
+  const recom=salary*.2;
+  const diff=amount-recom;
+  const msg=diff>=0?`La aportación actual de ${amount}€ supera el objetivo del 20% (${fmt(recom)}). ¡Excelente disciplina de ahorro!`:`La aportación actual de ${amount}€ está ${fmt(Math.abs(diff))} por debajo del objetivo del 20% (${fmt(recom)}).`;
+  $('budgetSummary').innerHTML=`<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:16px">${msg}</div><div class="grid-2" style="gap:10px"><div><div class="stat-lbl">Objetivo 20%</div><div style="font-family:var(--font-serif);font-size:20px;color:var(--accent)">${fmt(recom)}</div></div><div><div class="stat-lbl">Aportación actual</div><div style="font-family:var(--font-serif);font-size:20px;color:${diff>=0?'var(--accent)':'var(--gold)'}">${amount}€</div></div></div>`;
+}
+$('salaryInput').addEventListener('input',renderRule);
+
+// ═══════════════════════════════════════════════════════
+// RENTABILIDAD
+// ═══════════════════════════════════════════════════════
+function renderRentabilidad(){
+  const wr=wRent()*100;
+  $('rentVal').textContent=wr.toFixed(2)+'%';
+  $('rentChip').textContent='Ponderada: '+wr.toFixed(2)+'%';
+  $('rentSub').textContent=`Estimación basada en ${assets.length} activos con rentabilidades históricas de referencia. Editable desde "Editar cartera".`;
+
+  const grid=$('rentGrid'); grid.innerHTML='';
+  const cols=Math.min(assets.length,3);
+  grid.style.cssText=`display:grid;grid-template-columns:repeat(${cols},1fr);border-top:1px solid var(--border)`;
+  assets.forEach((a,i)=>{
+    const cell=document.createElement('div'); cell.className='div-cell';
+    if((i+1)%cols===0) cell.style.borderRight='none';
+    cell.innerHTML=`<div class="div-cell-lbl">${a.emoji} ${a.name}</div><div style="font-family:var(--font-serif);font-size:20px;color:${a.color}">${a.rent.toFixed(1)}%</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${a.pct}% de cartera → ${(a.pct/100*a.rent).toFixed(2)}% de aporte</div>`;
+    grid.appendChild(cell);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// GLOSARIO
+// ═══════════════════════════════════════════════════════
+function renderGlosario(){
+  $('glosarioList').innerHTML=glosario.map(g=>`<div class="card"><div style="padding:16px 20px"><div style="font-size:13px;font-weight:500;margin-bottom:6px">${g.t}</div><div style="font-size:12px;color:var(--text2);line-height:1.8">${g.d}</div></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════
+function openModal(){ editTmp=assets.map(a=>({...a})); renderModal(); $('modalOverlay').classList.add('open'); }
+function closeModal(){ $('modalOverlay').classList.remove('open'); }
+function closeIfOutside(e){ if(e.target===$('modalOverlay')) closeModal(); }
+
+function renderModal(){
+  ['editCore','editSat'].forEach(id=>$(id).innerHTML='');
+  editTmp.forEach((a,i)=>{
+    const thirdField=a.core
+      ?`<input class="ei ei-num" type="number" step="0.5" min="0" max="50" value="${a.rent}" data-i="${i}" data-f="rent">`
+      :`<input class="ei ei-num" type="number" step="0.1" min="0" max="30" value="${a.divYield}" data-i="${i}" data-f="divYield">`;
+    const div=document.createElement('div'); div.className='edit-row';
+    div.innerHTML=`<input class="ei ei-emoji" value="${a.emoji}" data-i="${i}" data-f="emoji"><input class="ei" value="${a.name}" data-i="${i}" data-f="name" placeholder="Nombre"><div style="display:flex;align-items:center;gap:3px"><input class="ei ei-num" type="number" min="0" max="100" value="${a.pct}" data-i="${i}" data-f="pct"><span style="font-size:10px;color:var(--text3)">%</span></div><div style="display:flex;align-items:center;gap:2px">${thirdField}<span style="font-size:10px;color:var(--text3)">%</span></div><button class="del-btn" onclick="removeAsset(${i})">✕</button>`;
+    div.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',onEdit));
+    const hint=document.createElement('div'); hint.id=`hint-${i}`; hint.style.cssText='font-size:9px;padding:0 8px 4px;min-height:14px';
+    const wrapper=document.createElement('div');
+    wrapper.appendChild(div); wrapper.appendChild(hint);
+    $(a.core?'editCore':'editSat').appendChild(wrapper);
+  });
+  checkPct();
+}
+
+function onEdit(e){
+  const i=+e.target.dataset.i, f=e.target.dataset.f, v=e.target.value;
+  if(f==='pct') editTmp[i].pct=Math.max(0,Math.min(100,parseFloat(v)||0));
+  else if(f==='rent') editTmp[i].rent=Math.max(0,parseFloat(v)||0);
+  else if(f==='divYield') editTmp[i].divYield=Math.max(0,parseFloat(v)||0);
+  else editTmp[i][f]=v;
+  if(f==='name') modalAutoRent(i, v);
+  checkPct();
+}
+
+function checkPct(){
+  const total=editTmp.reduce((s,a)=>s+a.pct,0);
+  const el=$('pctStatus');
+  if(Math.round(total)===100){el.className='pct-status pct-ok';el.textContent='✓ Los porcentajes suman correctamente el 100%';}
+  else if(total<100){el.className='pct-status pct-warn';el.textContent=`⚠ Suman ${total.toFixed(1)}% — faltan ${(100-total).toFixed(1)}%`;}
+  else{el.className='pct-status pct-err';el.textContent=`✕ Suman ${total.toFixed(1)}% — hay ${(total-100).toFixed(1)}% de exceso`;}
+}
+
+function addAsset(isCore){
+  const palette=['#e11d48','#7c3aed','#0891b2','#65a30d','#d97706','#0f766e'];
+  editTmp.push({emoji:'🌍',name:'Nuevo activo',sub:'Descripción',pct:0,color:palette[editTmp.length%palette.length],core:isCore,rent:isCore?8:5,divYield:0});
+  renderModal();
+}
+
+function removeAsset(i){ editTmp.splice(i,1); renderModal(); }
+
+function applyChanges(){
+  const total=editTmp.reduce((s,a)=>s+a.pct,0);
+  if(Math.round(total)!==100){alert(`Los porcentajes suman ${total.toFixed(1)}%. Deben sumar exactamente 100%.`);return;}
+  assets=[...editTmp];
+  closeModal();
+  renderAll();
+  // re-render active section
+  const active=document.querySelector('.section.active');
+  if(active) showSection(active.id.replace('sec-',''));
+}
+
+// ═══════════════════════════════════════════════════════
+// SLIDERS GLOBALES
+// ═══════════════════════════════════════════════════════
+$('sliderAmount').addEventListener('input',e=>{ amount=+e.target.value; $('valAmount').textContent=amount+'€'; renderAll(); });
+$('sliderYears').addEventListener('input',e=>{ $('valYears').textContent=e.target.value; });
+$('sliderYears').addEventListener('change',e=>{ horizon=+e.target.value; renderAll(); const active=document.querySelector('.section.active'); if(active) showSection(active.id.replace('sec-','')); });
+
+function renderAll(){
+  renderAlloc();
+  renderHomeMilestones();
+  if($('sec-interes').classList.contains('active')) renderMainChart();
+  if($('sec-dividendos').classList.contains('active')) renderDividendos();
+  if($('sec-rentabilidad').classList.contains('active')) renderRentabilidad();
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTO-RENT LOOKUP (base de datos offline de referencia)
+// ═══════════════════════════════════════════════════════
+const rentDB = [
+  // Índices globales
+  {k:['s&p 500','sp500','sp 500','s&p500'],       rent:10.5, div:0,   name:'S&P 500',         emoji:'🇺🇸'},
+  {k:['msci world','world','msci'],                rent:9.5,  div:0,   name:'MSCI World',      emoji:'🌍'},
+  {k:['nasdaq','nasdaq 100','qqq'],                rent:13.0, div:0,   name:'Nasdaq 100',      emoji:'💻'},
+  {k:['msci europe','europa','stoxx','eurostoxx'], rent:7.5,  div:2.5, name:'Europa MSCI',     emoji:'🇪🇺'},
+  {k:['emergentes','emerging','msci em','em'],     rent:8.5,  div:1.5, name:'Mercados Emergentes', emoji:'🌎'},
+  {k:['nikkei','japón','japon','japan'],           rent:7.0,  div:1.5, name:'Nikkei / Japón',  emoji:'🇯🇵'},
+  {k:['ftse','reino unido','uk','gran bretaña'],   rent:6.5,  div:3.5, name:'FTSE / Reino Unido', emoji:'🇬🇧'},
+  {k:['ibex','ibex35','españa','spain'],           rent:6.0,  div:3.5, name:'IBEX 35',         emoji:'🇪🇸'},
+  // REITs
+  {k:['realty income','realty','nyse: o','reit o'],rent:6.0,  div:5.1, name:'Realty Income',   emoji:'🏢'},
+  {k:['vici','vici properties'],                   rent:7.5,  div:5.5, name:'VICI Properties', emoji:'🎰'},
+  {k:['agree realty'],                             rent:6.5,  div:4.5, name:'Agree Realty',    emoji:'🏪'},
+  // Empresas
+  {k:['apple','aapl'],                             rent:14.0, div:0.5, name:'Apple',            emoji:'🍎'},
+  {k:['microsoft','msft'],                         rent:15.0, div:0.7, name:'Microsoft',        emoji:'🪟'},
+  {k:['google','alphabet','googl'],                rent:13.5, div:0,   name:'Alphabet / Google',emoji:'🔍'},
+  {k:['amazon','amzn'],                            rent:16.0, div:0,   name:'Amazon',           emoji:'📦'},
+  {k:['tesla','tsla'],                             rent:18.0, div:0,   name:'Tesla',            emoji:'⚡'},
+  {k:['nvidia','nvda'],                            rent:20.0, div:0.1, name:'Nvidia',           emoji:'🎮'},
+  {k:['meta','facebook'],                          rent:15.0, div:0.4, name:'Meta',             emoji:'👤'},
+  {k:['berkshire','brk'],                          rent:11.0, div:0,   name:'Berkshire Hathaway',emoji:'💼'},
+  {k:['johnson','jnj'],                            rent:7.5,  div:3.0, name:'Johnson & Johnson',emoji:'💊'},
+  {k:['coca cola','ko','cocacola'],                rent:7.0,  div:3.2, name:'Coca-Cola',        emoji:'🥤'},
+  {k:['procter','pg','procter gamble'],            rent:8.5,  div:2.4, name:'Procter & Gamble', emoji:'🧴'},
+  {k:['3m','mmm'],                                 rent:5.5,  div:5.5, name:'3M',               emoji:'🔧'},
+  {k:['exxon','xom'],                              rent:7.0,  div:3.8, name:'ExxonMobil',       emoji:'🛢️'},
+  {k:['chevron','cvx'],                            rent:7.5,  div:4.0, name:'Chevron',          emoji:'⛽'},
+  // ETFs populares
+  {k:['voo','vanguard s&p'],                       rent:10.5, div:1.3, name:'Vanguard S&P 500 (VOO)', emoji:'📊'},
+  {k:['spy'],                                      rent:10.5, div:1.3, name:'SPDR S&P 500 (SPY)',     emoji:'📊'},
+  {k:['iwm','russell 2000','small cap'],           rent:9.0,  div:1.2, name:'Russell 2000 Small Cap', emoji:'📈'},
+  {k:['vti','total market'],                       rent:10.0, div:1.4, name:'Vanguard Total Market',  emoji:'📊'},
+  {k:['eem','ishares em'],                         rent:8.5,  div:2.0, name:'iShares MSCI EM',        emoji:'🌎'},
+  // Bonos y renta fija
+  {k:['bono','bond','renta fija','obligaciones'],  rent:3.5,  div:3.5, name:'Bonos / Renta Fija',    emoji:'📋'},
+  {k:['treasury','treasuries','bono usa'],         rent:4.0,  div:4.0, name:'Treasury Bonds USA',    emoji:'🇺🇸'},
+  // Oro y materias primas
+  {k:['oro','gold','gld','au'],                    rent:5.5,  div:0,   name:'Oro',                   emoji:'🟡'},
+  {k:['plata','silver','slv'],                     rent:5.0,  div:0,   name:'Plata',                 emoji:'⚪'},
+  {k:['petróleo','petroleo','oil','wti','brent'],  rent:4.0,  div:0,   name:'Petróleo',              emoji:'🛢️'},
+  // Criptos (referencia muy orientativa)
+  {k:['bitcoin','btc'],                            rent:40.0, div:0,   name:'Bitcoin',               emoji:'₿'},
+  {k:['ethereum','eth'],                           rent:35.0, div:0,   name:'Ethereum',              emoji:'🔷'},
+];
+
+let crSearchTimer=null;
+function crAutoSearch(){
+  clearTimeout(crSearchTimer);
+  const q=($('crName').value||'').toLowerCase().trim();
+  if(q.length<2){ $('crSearchStatus').textContent=''; return; }
+  $('crSearchStatus').innerHTML='<span style="color:var(--text3)">Buscando…</span>';
+  crSearchTimer=setTimeout(()=>{
+    const match=rentDB.find(r=>r.k.some(k=>q.includes(k)||k.includes(q)));
+    if(match){
+      $('crSearchStatus').innerHTML=`<span style="color:var(--accent)">✓ Encontrado: ${match.emoji} <strong>${match.name}</strong> — Rent. histórica ref.: ~${match.rent}%/año${match.div>0?' · Yield div.: ~'+match.div+'%':''}</span>`;
+    } else {
+      $('crSearchStatus').innerHTML='<span style="color:var(--text3)">No encontrado en la base de datos. Introduce los datos manualmente.</span>';
+    }
+  },400);
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL: auto-rent cuando el usuario escribe el nombre
+// ═══════════════════════════════════════════════════════
+let modalSearchTimers={};
+function modalAutoRent(i, nameVal){
+  clearTimeout(modalSearchTimers[i]);
+  modalSearchTimers[i]=setTimeout(()=>{
+    const q=nameVal.toLowerCase().trim();
+    if(q.length<2) return;
+    const match=rentDB.find(r=>r.k.some(k=>q.includes(k)||k.includes(q)));
+    if(match){
+      const a=editTmp[i];
+      if(a.core){ a.rent=match.rent; }
+      else { a.divYield=match.div; a.rent=match.rent; }
+      if(match.emoji && !a.emoji || a.emoji==='🌍') a.emoji=match.emoji;
+      // Actualizar inputs en modal sin re-renderizar todo
+      const rentInput=document.querySelector(`[data-i="${i}"][data-f="rent"]`);
+      const divInput=document.querySelector(`[data-i="${i}"][data-f="divYield"]`);
+      if(rentInput) rentInput.value=match.rent;
+      if(divInput)  divInput.value=match.div;
+      const emojiInput=document.querySelector(`[data-i="${i}"][data-f="emoji"]`);
+      if(emojiInput) emojiInput.value=a.emoji;
+      // Show hint
+      const hint=document.getElementById(`hint-${i}`);
+      if(hint) hint.innerHTML=`<span style="color:var(--accent);font-size:9px">✓ ${match.name}: ~${match.rent}%/año${match.div>0?' · div '+match.div+'%':''}</span>`;
+    }
+  },500);
+}
+
+// ═══════════════════════════════════════════════════════
+// CALCULADORA DE RENTABILIDAD
+// ═══════════════════════════════════════════════════════
+function calcRental(){
+  const buy=parseFloat($('crBuy').value)||0;
+  const now=parseFloat($('crNow').value)||0;
+  const shares=parseFloat($('crShares').value)||1;
+  const years=parseFloat($('crYears').value)||1;
+  const name=$('crName').value||'Activo';
+
+  $('crAssetName').textContent=name||'—';
+
+  if(!buy||!now){ $('crGain').textContent='—'; $('crGainPct').textContent='Introduce precio de compra y precio actual'; $('crInvested').textContent='—'; $('crValue').textContent='—'; $('crCAGR').textContent='—'; $('crBreakeven').textContent='—'; return; }
+
+  const invested=buy*shares, value=now*shares;
+  const gain=value-invested, gainPct=(gain/invested)*100;
+  const cagr=(Math.pow(now/buy,1/years)-1)*100;
+  const breakeven=gain<0 ? ((invested-value)/value*100) : null;
+
+  const isPos=gain>=0;
+  const hero=$('crResultHero');
+  hero.style.background=isPos?'var(--accent-bg)':'var(--red-bg)';
+  hero.style.borderColor=isPos?'#c3e6d5':'#f5c6c6';
+
+  $('crGain').textContent=(isPos?'+':'')+fmtS(gain);
+  $('crGain').style.color=isPos?'var(--accent)':'var(--red)';
+  $('crGainPct').innerHTML=`<span style="color:${isPos?'var(--accent)':'var(--red)'};font-weight:500">${isPos?'+':''}${gainPct.toFixed(2)}%</span> sobre el capital invertido`;
+  $('crInvested').textContent=fmt(invested);
+  $('crValue').textContent=fmt(value);
+  $('crCAGR').innerHTML=`<span style="color:${isPos?'var(--accent)':'var(--red)'}">${isPos?'+':''}${cagr.toFixed(2)}%/año</span>`;
+  $('crBreakeven').textContent=breakeven!=null ? `Necesita +${breakeven.toFixed(2)}%` : '—';
+  calcTarget();
+}
+
+function calcTarget(){
+  const buy=parseFloat($('crBuy').value)||0;
+  const now=parseFloat($('crNow').value)||0;
+  const shares=parseFloat($('crShares').value)||1;
+  const target=parseFloat($('crTarget').value)||0;
+  const ty=+$('crTargetYears').value||5;
+  $('vCrTargetYears').textContent=ty;
+  if(!buy||!target||!shares){ $('crTargetResult').innerHTML='Introduce precio de compra, actual y precio objetivo para ver la simulación.'; return; }
+  const gain=(target-buy)*shares, gainPct=((target-buy)/buy)*100;
+  const gainFromNow=(target-now)*shares, pctFromNow=now?((target-now)/now*100):0;
+  const cagr=(Math.pow(target/buy,1/ty)-1)*100;
+  const isPos=gainFromNow>=0;
+  $('crTargetResult').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px">
+      <div><div class="stat-lbl">Ganancia desde compra</div><div style="font-family:var(--font-serif);font-size:16px;color:${gainPct>=0?'var(--accent)':'var(--red)'}">${gainPct>=0?'+':''}${gainPct.toFixed(2)}% (${gainPct>=0?'+':''}${fmtS(gain)})</div></div>
+      <div><div class="stat-lbl">Ganancia desde hoy</div><div style="font-family:var(--font-serif);font-size:16px;color:${isPos?'var(--accent)':'var(--red)'}">${isPos?'+':''}${pctFromNow.toFixed(2)}% (${isPos?'+':''}${fmtS(gainFromNow)})</div></div>
+      <div><div class="stat-lbl">CAGR necesaria en ${ty} años</div><div style="font-family:var(--font-serif);font-size:16px;color:var(--accent2)">${cagr.toFixed(2)}%/año</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--text3)">Simulación basada en precio objetivo de ${target}€ en ${ty} ${ty===1?'año':'años'}. No constituye previsión ni recomendación de inversión.</div>`;
+}
+
+// ── Tabla comparadora ──
+let crRows=[{name:'',buy:0,now:0,shares:1}];
+function initCrTable(){ if(crRows.length===0) crRows=[{name:'',buy:0,now:0,shares:1}]; renderCrTable(); }
+function crAddRow(){ crRows.push({name:'',buy:0,now:0,shares:1}); renderCrTable(); }
+function crDelRow(i){ crRows.splice(i,1); if(crRows.length===0) crRows=[{name:'',buy:0,now:0,shares:1}]; renderCrTable(); }
+
+function renderCrTable(){
+  const tbody=$('crTableBody'); tbody.innerHTML='';
+  let totalInv=0, totalVal=0;
+  crRows.forEach((r,i)=>{
+    const gain=(r.now-r.buy)*r.shares, pct=r.buy?((r.now-r.buy)/r.buy*100):0;
+    const isPos=gain>=0;
+    totalInv+=r.buy*r.shares; totalVal+=r.now*r.shares;
+    const tr=document.createElement('tr');
+    tr.style.borderBottom='1px solid var(--bg)';
+    tr.innerHTML=`
+      <td style="padding:8px 10px"><input style="font-family:var(--font-sans);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;outline:none;width:110px;color:var(--text)" value="${r.name}" placeholder="Activo" oninput="crRows[${i}].name=this.value;renderCrTable()"></td>
+      <td style="padding:8px 10px;text-align:right"><input type="number" style="font-family:var(--font-sans);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;outline:none;width:80px;text-align:right;color:var(--text)" value="${r.buy||''}" placeholder="0.00" min="0" step="0.01" oninput="crRows[${i}].buy=parseFloat(this.value)||0;renderCrTable()"></td>
+      <td style="padding:8px 10px;text-align:right"><input type="number" style="font-family:var(--font-sans);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;outline:none;width:80px;text-align:right;color:var(--text)" value="${r.now||''}" placeholder="0.00" min="0" step="0.01" oninput="crRows[${i}].now=parseFloat(this.value)||0;renderCrTable()"></td>
+      <td style="padding:8px 10px;text-align:right"><input type="number" style="font-family:var(--font-sans);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;outline:none;width:60px;text-align:right;color:var(--text)" value="${r.shares}" min="0.001" step="1" oninput="crRows[${i}].shares=parseFloat(this.value)||1;renderCrTable()"></td>
+      <td style="padding:8px 14px;text-align:right;font-family:var(--font-serif);font-size:15px;color:${isPos?'var(--accent)':'var(--red)'}">${r.buy&&r.now?(isPos?'+':'')+fmtS(gain):'—'}</td>
+      <td style="padding:8px 14px;text-align:right;font-family:var(--font-serif);font-size:14px;color:${isPos?'var(--accent)':'var(--red)'}">${r.buy&&r.now?(isPos?'+':'')+pct.toFixed(2)+'%':'—'}</td>
+      <td style="padding:8px 6px;text-align:center"><button class="del-btn" onclick="crDelRow(${i})">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+  const totalGain=totalVal-totalInv;
+  $('crTableTotal').innerHTML=totalInv>0?`<span style="color:${totalGain>=0?'var(--accent)':'var(--red)'}">${totalGain>=0?'+':''}${fmtS(totalGain)} (${((totalGain/totalInv)*100).toFixed(2)}%)</span>`:'—';
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL: auto-rent patch into onEdit + renderModal
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+const s=document.createElement('script');
+s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+s.onload=()=>{ renderAlloc(); renderHomeMilestones(); };
+document.head.appendChild(s);
+</script>
+</body>
+</html>
